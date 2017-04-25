@@ -1,0 +1,6 @@
+# NetBeans
+/nbproject/private/
+/build/
+build.xml
+/nbproject/
+manifest.mf

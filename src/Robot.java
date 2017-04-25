@@ -1,4 +1,6 @@
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Robot {
 
@@ -22,10 +24,11 @@ public class Robot {
         double rad;
     }
 
-    public Robot(ROI roi, Vec start) {
+    public Robot(ROI roi, Vec start, Window window) {
         this.roi = roi;
         this.pos = start;
         this.sensors = new ArrayList<>();
+        this.window = window;
     }
 
     public void FCD() {
@@ -47,6 +50,11 @@ public class Robot {
                 move(nextGrid(pos, mainDir[i]));
                 putSensor(new Sensor(pos, sensors.size(), Sensor.State.REGULAR, prev));
             }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Robot.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
 
@@ -63,14 +71,17 @@ public class Robot {
     void putSensor(Sensor s) {
         sensors.add(s);
         System.out.println("sensor " + pos.x + " " + pos.y);
+        window.placeSensor(pos);
     }
 
     void move(Vec pos) {
         this.pos = pos;
         System.out.println("move " + pos.x + " " + pos.y);
+        window.setRobotPosition(pos);
     }
 
     ROI roi;
     Vec pos;
     ArrayList<Sensor> sensors;
+    Window window;
 }
