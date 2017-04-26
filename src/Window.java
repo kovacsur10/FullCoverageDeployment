@@ -2,8 +2,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class Window extends JFrame{
+    private final int robotDrawingDelayMillisec = 1000;
+    private final int sensorDrawingDelayMillisec = 500;
+    private final int animationDelayMillisec = 100;
     private final int sensorRadius = 3;
     private final Vec sensorOffset = new Vec(-this.sensorRadius, -this.sensorRadius);
     private final int robotRadius = 5;
@@ -30,7 +35,6 @@ class Window extends JFrame{
 
     @Override
     public void paint(Graphics g) {
-        System.out.println("PAINTED");
         super.paint(g);
         Graphics2D g2 = (Graphics2D) g;
         
@@ -56,14 +60,49 @@ class Window extends JFrame{
     public void placeSensor(Vec position){
         this.sensors.add(transformVec(position).add(this.sensorOffset));
         this.paint(this.getGraphics());
+        try {
+            Thread.sleep(this.sensorDrawingDelayMillisec);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Robot.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
     public void setRobotPosition(Vec position){
         this.robotPosition = transformVec(position).add(this.robotOffset);
         this.paint(this.getGraphics());
+        try {
+            Thread.sleep(this.robotDrawingDelayMillisec);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Robot.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    public void moveRobotToPosition(Vec position){
+        Vec endPosition = transformVec(position).add(this.robotOffset);
+        this.robotAnimation(this.robotPosition, endPosition, 1000);
+        this.robotPosition = endPosition;
+        this.paint(this.getGraphics());
+        try {
+            Thread.sleep(this.robotDrawingDelayMillisec);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Robot.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
     private Vec transformVec(Vec vec){
         return vec.mul(this.scale).add(this.offset);
+    }
+    
+    private void robotAnimation(Vec start, Vec end, int time){
+        Vec delta = end.sub(start).mul((double)this.animationDelayMillisec / (double)time);
+        for(int i = 0; i < Math.floor(time / this.animationDelayMillisec); i++){
+            this.robotPosition = this.robotPosition.add(delta);
+            this.paint(this.getGraphics());
+            try {
+                Thread.sleep(this.animationDelayMillisec);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Robot.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
 }

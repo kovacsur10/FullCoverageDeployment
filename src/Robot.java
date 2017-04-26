@@ -29,6 +29,7 @@ public class Robot {
         this.pos = start;
         this.sensors = new ArrayList<>();
         this.window = window;
+        this.window.setRobotPosition(this.pos);
     }
 
     public void FCD() {
@@ -50,11 +51,6 @@ public class Robot {
                 move(nextGrid(pos, mainDir[i]));
                 putSensor(new Sensor(pos, sensors.size(), Sensor.State.REGULAR, prev));
             }
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Robot.class.getName()).log(Level.SEVERE, null, ex);
-            }
         }
     }
 
@@ -69,15 +65,15 @@ public class Robot {
     }
 
     void putSensor(Sensor s) {
-        sensors.add(s);
+        this.sensors.add(s);
         System.out.println("sensor " + pos.x + " " + pos.y);
-        window.placeSensor(pos);
+        this.window.placeSensor(pos);
     }
 
     void move(Vec pos) {
         this.pos = pos;
         System.out.println("move " + pos.x + " " + pos.y);
-        window.setRobotPosition(pos);
+        this.window.moveRobotToPosition(pos);
     }
 
     ROI roi;
