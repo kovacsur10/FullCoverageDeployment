@@ -4,3 +4,6 @@
 build.xml
 /nbproject/
 manifest.mf
+# IntelliJ
+.idea/
+out/

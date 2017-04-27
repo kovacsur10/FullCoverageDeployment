@@ -32,11 +32,13 @@ public class Robot {
         this.window.setRobotPosition(this.pos);
     }
 
+    Direction[] mainDir = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+    Direction[] cornerDir = {Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.SOUTH_WEST, Direction.NORTH_WEST};
+
     public void FCD() {
-        Direction[] mainDir = {Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH};
-        Direction[] cornerDir = {Direction.NORTH_WEST, Direction.NORTH_EAST, Direction.SOUTH_WEST, Direction.SOUTH_EAST};
         putSensor(new Sensor(pos, sensors.size(), Sensor.State.REGULAR, null));
         while (true) {
+            boundaryHandling();
             int i;
             for (i = 0; i < mainDir.length &&
                     (roi.dist(pos, mainDir[i].rad, visibility) < grid || sensorAt(nextGrid(pos, mainDir[i])) != null); ++i)
@@ -54,14 +56,47 @@ public class Robot {
         }
     }
 
+    void boundaryHandling() {
+        ArrayList<Vec> BSensors = new ArrayList<>();
+        for(Direction dir : mainDir) {
+            double dist = roi.dist(pos, dir.rad, visibility);
+            if(dist > grid/2 && dist < grid)
+                BSensors.add(nextGrid(pos, dir, dist));
+        }
+        for(Direction dir : cornerDir) {
+            double dist = roi.dist(pos, dir.rad, visibility);
+            if(dist > Sensor.sensing && dist < 2*Sensor.sensing && !isCovered(nextGrid(pos, dir, dist)))
+                BSensors.add(nextGrid(pos, dir, dist));
+        }
+        if(!BSensors.isEmpty()) {
+            Vec u = pos;
+            for (Vec pos : BSensors) {
+                move(pos);
+                putSensor(new Sensor(pos, sensors.size(), Sensor.State.BOUNDARY, sensorAt(u)));
+            }
+            move(u);
+        }
+    }
+
     Vec nextGrid(Vec pos, Direction dir) {
         return new Vec(pos.x + Math.cos(dir.rad) * grid, pos.y + Math.sin(dir.rad) * grid);
+    }
+
+    Vec nextGrid(Vec pos, Direction dir, double step) {
+        return new Vec(pos.x + Math.cos(dir.rad) * step, pos.y + Math.sin(dir.rad) * step);
     }
 
     Sensor sensorAt(Vec pos) {
         for (Sensor s : sensors)
             if (s.coord.equals(pos)) return s;
         return null;
+    }
+
+    boolean isCovered(Vec pos) {
+        for(Sensor s: sensors)
+            if(pos.dist(s.coord) <= Sensor.sensing)
+                return true;
+        return false;
     }
 
     void putSensor(Sensor s) {
