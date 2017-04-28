@@ -34,7 +34,7 @@ public class View {
         this.moveRobotButton = new JButton("Next step");
         menuBar.add(this.moveRobotButton);
         
-        Window window = new Window(450, 450, 50.0, new Vec(220, 140));
+        Window window = new Window(450, 450, 50.0f, new Vec(220, 140));
         window.setSides(this.roi.sides);
         window.add(menuBar);
         this.frame.add(window);

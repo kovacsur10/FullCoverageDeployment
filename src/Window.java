@@ -9,6 +9,7 @@ class Window extends JPanel{
     private final Vec sensorOffset = new Vec(-this.sensorRadius, -this.sensorRadius);
     private final int robotRadius = 5;
     private final Vec robotOffset = new Vec(-this.robotRadius, -this.robotRadius);
+    private final int sensingRadius;
     
     private ArrayList<Line> sides;
     private final ArrayList<Vec> sensors;
@@ -16,9 +17,9 @@ class Window extends JPanel{
     private final Vec offset;
     private final int width;
     private final int height;
-    private final double scale;
+    private final float scale;
             
-    public Window(int width, int height, double scale, Vec offset){       
+    public Window(int width, int height, float scale, Vec offset){       
         this.offset = offset;
         
         this.scale = scale;
@@ -28,6 +29,8 @@ class Window extends JPanel{
         
         this.width = width;
         this.height = height;
+        
+        this.sensingRadius = Math.round(((float)Math.sqrt(2)) * this.scale * 2);
     }
     
     @Override
@@ -46,7 +49,10 @@ class Window extends JPanel{
         });
         
         this.sensors.forEach((vec) -> {
+            Vec vecRad = vec.sub(new Vec(this.sensingRadius/2.0, sensingRadius/2.0));
+            vec = vec.add(this.sensorOffset);
             g2.drawRoundRect(Math.round((float)vec.x), Math.round((float)vec.y), this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2);
+            g2.drawRoundRect(Math.round((float)vecRad.x), Math.round((float)vecRad.y), this.sensingRadius, this.sensingRadius, this.sensingRadius, this.sensingRadius);
         });
         
         g2.drawRoundRect(Math.round((float)this.robotPosition.x), Math.round((float)this.robotPosition.y), this.robotRadius*2, this.robotRadius*2, this.robotRadius*2, this.robotRadius*2);
@@ -61,7 +67,7 @@ class Window extends JPanel{
     
     public void placeSensors(ArrayList<Vec> position){
         position.forEach((pos) -> {
-            this.sensors.add(transformVec(pos).add(this.sensorOffset));
+            this.sensors.add(transformVec(pos));
         });
         this.repaint();
     }
