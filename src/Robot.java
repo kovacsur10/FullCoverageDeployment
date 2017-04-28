@@ -1,6 +1,4 @@
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Robot {
 
@@ -24,20 +22,24 @@ public class Robot {
         double rad;
     }
 
-    public Robot(ROI roi, Vec start, Window window) {
+    public Robot(ROI roi, Vec start) {
         this.roi = roi;
         this.pos = start;
         this.sensors = new ArrayList<>();
-        this.window = window;
-        this.window.setRobotPosition(this.pos);
+        this.newSensorVecs = new ArrayList<>();
+        this.fcdEnded = false;
+        this.started = false;
+        //TODO: set robot position on screen
     }
 
     Direction[] mainDir = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
     Direction[] cornerDir = {Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.SOUTH_WEST, Direction.NORTH_WEST};
-
-    public void FCD() {
-        putSensor(new Sensor(pos, sensors.size(), Sensor.State.REGULAR, null));
-        while (true) {
+    
+    public void stepFCD() {
+        if(!this.started){
+            putSensor(new Sensor(pos, sensors.size(), Sensor.State.REGULAR, null));
+            this.started = true;
+        }else if(!this.fcdEnded){
             boundaryHandling();
             int i;
             for (i = 0; i < mainDir.length &&
@@ -45,7 +47,10 @@ public class Robot {
                 ;
             if (i == mainDir.length) {
                 Sensor back = sensorAt(pos).backPtr;
-                if (back == null) break;
+                if(back == null){
+                    this.fcdEnded = true;
+                    return;
+                }
                 move(back.coord);
             }
             else {
@@ -101,18 +106,25 @@ public class Robot {
 
     void putSensor(Sensor s) {
         this.sensors.add(s);
+        this.newSensorVecs.add(s.coord);
         System.out.println("sensor " + pos.x + " " + pos.y);
-        this.window.placeSensor(pos);
     }
 
     void move(Vec pos) {
         this.pos = pos;
         System.out.println("move " + pos.x + " " + pos.y);
-        this.window.moveRobotToPosition(pos);
+    }
+    
+    public ArrayList<Vec> getNewSensors(){
+        ArrayList<Vec> tmpNewSensorVecs = new ArrayList<Vec>(this.newSensorVecs);
+        this.newSensorVecs.clear();
+        return tmpNewSensorVecs;
     }
 
     ROI roi;
     Vec pos;
     ArrayList<Sensor> sensors;
-    Window window;
+    private ArrayList<Vec> newSensorVecs;
+    private boolean fcdEnded;
+    private boolean started;
 }

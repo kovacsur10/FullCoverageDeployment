@@ -2,12 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-class Window extends JFrame{
-    private final int robotDrawingDelayMillisec = 1000;
-    private final int sensorDrawingDelayMillisec = 500;
+class Window extends JPanel{
     private final int animationDelayMillisec = 100;
     private final int sensorRadius = 3;
     private final Vec sensorOffset = new Vec(-this.sensorRadius, -this.sensorRadius);
@@ -15,27 +11,33 @@ class Window extends JFrame{
     private final Vec robotOffset = new Vec(-this.robotRadius, -this.robotRadius);
     
     private ArrayList<Line> sides;
-    private ArrayList<Vec> sensors;
-    private double scale;
+    private final ArrayList<Vec> sensors;
     private Vec robotPosition;
-    private Vec offset;
+    private final Vec offset;
+    private final int width;
+    private final int height;
+    private final double scale;
             
-    public Window(int width, int height, double scale, Vec offset){
-        JPanel panel=new JPanel();
-        getContentPane().add(panel);
-        setSize(width,height);
+    public Window(int width, int height, double scale, Vec offset){       
         this.offset = offset;
         
-        this.setVisible(true);
-        
         this.scale = scale;
-        this.sensors = new ArrayList<Vec>();
+        this.sensors = new ArrayList<>();
+        this.sides = new ArrayList<>();
         this.robotPosition = new Vec(0,0);
+        
+        this.width = width;
+        this.height = height;
+    }
+    
+    @Override
+    public Dimension getPreferredSize(){
+        return new Dimension(this.width, this.height);
     }
 
     @Override
-    public void paint(Graphics g) {
-        super.paint(g);
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
         
         this.sides.forEach((l) -> {
@@ -51,42 +53,27 @@ class Window extends JFrame{
     }
     
     public void setSides(ArrayList<Line> sides){
-        this.sides = new ArrayList<Line>();
+        this.sides = new ArrayList<>();
         sides.forEach((l) -> {
             this.sides.add(new Line(transformVec(l.getP1()), transformVec(l.getP2())));
         });
     }
     
-    public void placeSensor(Vec position){
-        this.sensors.add(transformVec(position).add(this.sensorOffset));
-        this.paint(this.getGraphics());
-        try {
-            Thread.sleep(this.sensorDrawingDelayMillisec);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(Robot.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public void placeSensors(ArrayList<Vec> position){
+        position.forEach((pos) -> {
+            this.sensors.add(transformVec(pos).add(this.sensorOffset));
+        });
+        this.repaint();
     }
     
     public void setRobotPosition(Vec position){
         this.robotPosition = transformVec(position).add(this.robotOffset);
-        this.paint(this.getGraphics());
-        try {
-            Thread.sleep(this.robotDrawingDelayMillisec);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(Robot.class.getName()).log(Level.SEVERE, null, ex);
-        }
     }
     
     public void moveRobotToPosition(Vec position){
         Vec endPosition = transformVec(position).add(this.robotOffset);
         this.robotAnimation(this.robotPosition, endPosition, 1000);
         this.robotPosition = endPosition;
-        this.paint(this.getGraphics());
-        try {
-            Thread.sleep(this.robotDrawingDelayMillisec);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(Robot.class.getName()).log(Level.SEVERE, null, ex);
-        }
     }
     
     private Vec transformVec(Vec vec){
@@ -97,12 +84,6 @@ class Window extends JFrame{
         Vec delta = end.sub(start).mul((double)this.animationDelayMillisec / (double)time);
         for(int i = 0; i < Math.floor(time / this.animationDelayMillisec); i++){
             this.robotPosition = this.robotPosition.add(delta);
-            this.paint(this.getGraphics());
-            try {
-                Thread.sleep(this.animationDelayMillisec);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Robot.class.getName()).log(Level.SEVERE, null, ex);
-            }
         }
     }
 }
