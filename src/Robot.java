@@ -120,6 +120,10 @@ public class Robot {
         this.newSensorVecs.clear();
         return tmpNewSensorVecs;
     }
+    
+    public boolean fcdEnded(){
+        return fcdEnded;
+    }
 
     ROI roi;
     Vec pos;

@@ -1,3 +1,6 @@
+import Actions.AutoStepAction;
+import Actions.StepAction;
+import Actions.StopStepAction;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
@@ -18,6 +21,17 @@ class Window extends JPanel{
     private final int width;
     private final int height;
     private final float scale;
+    
+    public JButton moveRobotButton;
+    public JButton autoMoveRobotButton;
+    public JButton stopMovingRobotButton;
+    public JButton autoMoveRobotButtonInvisible;
+    
+    //animation variable
+    private boolean isAnimating = false;
+    private int animationIndex = 0;
+    private int animationIndexBoundary = 0;
+    private Vec animationDelta;
             
     public Window(int width, int height, float scale, Vec offset){       
         this.offset = offset;
@@ -31,6 +45,36 @@ class Window extends JPanel{
         this.height = height;
         
         this.sensingRadius = Math.round(((float)Math.sqrt(2)) * this.scale * 2);
+        
+        JMenu menu = new JMenu("Main");
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.add(menu);
+        JButton button = new JButton(new StepAction(Values.stepActionName));
+        button.setFocusable(true);
+        button.setEnabled(true);
+        this.moveRobotButton = button;
+        menuBar.add(this.moveRobotButton);
+        
+        button = new JButton(new AutoStepAction(Values.autoRunActionKey));
+        button.setFocusable(true);
+        button.setEnabled(true);
+        this.autoMoveRobotButton = button;
+        menuBar.add(this.autoMoveRobotButton);
+        
+        button = new JButton(new AutoStepAction(Values.autoRunActionKey));
+        button.setFocusable(false);
+        button.setEnabled(true);
+        button.setVisible(false);
+        this.autoMoveRobotButtonInvisible = button;
+        menuBar.add(this.autoMoveRobotButtonInvisible);
+        
+        button = new JButton(new StopStepAction(Values.stopRunActionKey));
+        button.setFocusable(true);
+        button.setEnabled(false);
+        this.stopMovingRobotButton = button;
+        menuBar.add(this.stopMovingRobotButton);
+        
+        this.add(menuBar);
     }
     
     @Override
@@ -40,6 +84,7 @@ class Window extends JPanel{
 
     @Override
     public void paintComponent(Graphics g) {
+        System.out.println("PRINT");
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
         
@@ -74,22 +119,27 @@ class Window extends JPanel{
     
     public void setRobotPosition(Vec position){
         this.robotPosition = transformVec(position).add(this.robotOffset);
+        this.repaint();
     }
     
     public void moveRobotToPosition(Vec position){
-        Vec endPosition = transformVec(position).add(this.robotOffset);
-        this.robotAnimation(this.robotPosition, endPosition, 1000);
-        this.robotPosition = endPosition;
+        if(this.isAnimating && this.animationIndex == this.animationIndexBoundary){
+            this.setRobotPosition(position);
+            this.isAnimating = false;
+            return;
+        }
+        if(!this.isAnimating){
+            this.isAnimating = true;
+            this.animationIndex = 0;
+            this.animationIndexBoundary = Values.robotMovementAnimationTime / this.animationDelayMillisec;
+            this.animationDelta = position.sub(this.robotPosition).mul((double)this.animationDelayMillisec / (double) Values.robotMovementAnimationTime);
+        }
+        this.robotPosition = this.robotPosition.add(this.animationDelta);
+        this.animationIndex++;
+        this.repaint();
     }
     
     private Vec transformVec(Vec vec){
         return vec.mul(this.scale).add(this.offset);
-    }
-    
-    private void robotAnimation(Vec start, Vec end, int time){
-        Vec delta = end.sub(start).mul((double)this.animationDelayMillisec / (double)time);
-        for(int i = 0; i < Math.floor(time / this.animationDelayMillisec); i++){
-            this.robotPosition = this.robotPosition.add(delta);
-        }
     }
 }
