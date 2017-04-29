@@ -17,6 +17,13 @@ public class Line extends Line2D.Double {
         return new Vec((Point2D.Double) super.getP2());
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if(!(obj instanceof Line)) return super.equals(obj);
+        Line line = (Line)obj;
+        return getP1().equals(line.getP1()) && getP2().equals(line.getP2()) ||
+                getP2().equals(line.getP1()) && getP1().equals(line.getP2());
+    }
 
     Vec intersect(Line S2) {
         Vec u = this.getP2().sub(this.getP1());
@@ -107,4 +114,6 @@ public class Line extends Line2D.Double {
         }
         return false;
     }
+
+    boolean isEntrance = false;
 }

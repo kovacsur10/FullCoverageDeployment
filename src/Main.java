@@ -9,6 +9,6 @@ public class Main {
         window.setSides(roi.sides);
         
         Robot robot = new Robot(roi, new Vec(0,0), window);
-        robot.FCD();
+        robot.FCD(false);
     }
 }
