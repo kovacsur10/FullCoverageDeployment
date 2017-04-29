@@ -40,8 +40,8 @@ public class Robot {
             putSensor(new Sensor(pos, sensors.size(), Sensor.State.REGULAR, null));
             this.started = true;
         } else if (!this.fcdEnded) {
-            criticalAreas();
-            boundaryHandling();
+            if (criticalAreas()) return;
+            if (boundaryHandling()) return;
             int i;
             for (i = 0; i < mainDir.length &&
                     (roi.dist(pos, mainDir[i].rad, visibility) < grid || sensorAt(nextGrid(pos, mainDir[i])) != null); ++i)
@@ -61,32 +61,7 @@ public class Robot {
         }
     }
 
-    public void FCD(boolean subROI) {
-        putSensor(new Sensor(pos, sensors.size(), subROI ? Sensor.State.ENTRANCE : Sensor.State.REGULAR, null));
-        while (true) {
-            criticalAreas();
-
-            boundaryHandling();
-            int i;
-            for (i = 0; i < mainDir.length &&
-                    (roi.dist(pos, mainDir[i].rad, visibility) < grid || sensorAt(nextGrid(pos, mainDir[i])) != null); ++i)
-                ;
-            if (i == mainDir.length) {
-                Sensor back = sensorAt(pos).backPtr;
-                if (back == null) {
-                    this.fcdEnded = true;
-                    return;
-                }
-                move(back.coord);
-            } else {
-                Sensor prev = sensorAt(pos);
-                move(nextGrid(pos, mainDir[i]));
-                putSensor(new Sensor(pos, sensors.size(), Sensor.State.REGULAR, prev));
-            }
-        }
-    }
-
-    void boundaryHandling() {
+    boolean boundaryHandling() {
         ArrayList<Vec> BSensors = new ArrayList<>();
         for (Direction dir : mainDir) {
             double dist = roi.dist(pos, dir.rad, visibility);
@@ -95,9 +70,10 @@ public class Robot {
         }
         for (Direction dir : cornerDir) {
             double dist = roi.dist(pos, dir.rad, visibility);
-            if (dist > Sensor.sensing && dist < 2 * Sensor.sensing && !isCovered(nextGrid(pos, dir, dist)))
+            if (dist > Sensor.sensing && dist < 2 * Sensor.sensing)
                 BSensors.add(nextGrid(pos, dir, dist));
         }
+        BSensors.removeIf(v->isCovered(v));
         if (!BSensors.isEmpty()) {
             Vec u = pos;
             for (Vec pos : BSensors) {
@@ -105,10 +81,12 @@ public class Robot {
                 putSensor(new Sensor(pos, sensors.size(), Sensor.State.BOUNDARY, sensorAt(u)));
             }
             move(u);
+            return true;
         }
+        return false;
     }
 
-    void criticalAreas() {
+    boolean criticalAreas() {
         ArrayList<Vec> polygon = new ArrayList<>();
         for (Vec v : roi.points) {
             if (pos.dist(v) > visibility) continue;
@@ -126,19 +104,18 @@ public class Robot {
         for (int i = 0; i < polygon.size() - 1; ++i) {
             if (nextQuadrant(polygon.get(i), polygon.get(i + 1))) continue;
             Line edge = new Line(polygon.get(i), polygon.get(i + 1));
-            if (!roi.sides.contains(edge)) {
-                Vec u = pos,
-                        entrance = edge.getP1().add(edge.getP2()).mul(0.5),
-                        shift = entrance.sub(u).mul(Vec.eps);
-                entrance = entrance.add(shift);
-                move(entrance);
-                edge.isEntrance = true;
-                roi.sides.add(edge); //TODO: add side to window
-                FCD(true);
-                sensorAt(entrance).backPtr = sensorAt(u);
-                move(u);
-            }
+            if (roi.sides.contains(edge)) continue;
+            Vec u = pos,
+                    entrance = edge.getP1().add(edge.getP2()).mul(0.5),
+                    shift = entrance.sub(u).mul(Vec.eps);
+            entrance = entrance.add(shift);
+            move(entrance);
+            edge.isEntrance = true;
+            roi.sides.add(edge); //TODO: add side to window
+            putSensor(new Sensor(pos, sensors.size(), Sensor.State.ENTRANCE, sensorAt(u)));
+            return true;
         }
+        return false;
     }
 
     boolean nextQuadrant(Vec a, Vec b) {
