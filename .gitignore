@@ -7,3 +7,4 @@ manifest.mf
 # IntelliJ
 .idea/
 out/
+/dist/

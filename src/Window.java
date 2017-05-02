@@ -3,10 +3,12 @@ import Actions.StepAction;
 import Actions.StopStepAction;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.*;
 import java.util.ArrayList;
 
-class Window extends JPanel{
+class Window extends JPanel implements ActionListener{
     private final int animationDelayMillisec = 100;
     private final int sensorRadius = 3;
     private final Vec sensorOffset = new Vec(-this.sensorRadius, -this.sensorRadius);
@@ -17,6 +19,7 @@ class Window extends JPanel{
     private ArrayList<Line> sides;
     private final ArrayList<Vec> sensors;
     private Vec robotPosition;
+    private Vec robotRealWorldPosition = new Vec(0,0);
     private final Vec offset;
     private final int width;
     private final int height;
@@ -28,10 +31,13 @@ class Window extends JPanel{
     public JButton autoMoveRobotButtonInvisible;
     
     //animation variable
+    private Timer timer;
     private boolean isAnimating = false;
     private int animationIndex = 0;
     private int animationIndexBoundary = 0;
     private Vec animationDelta;
+    private Vec animationPosition;
+    private Vec animationEndPoint;
             
     public Window(int width, int height, float scale, Vec offset){       
         this.offset = offset;
@@ -75,6 +81,7 @@ class Window extends JPanel{
         menuBar.add(this.stopMovingRobotButton);
         
         this.add(menuBar);
+        this.timer = new Timer(Values.robotMovementAnimationTime, this);
     }
     
     @Override
@@ -118,25 +125,34 @@ class Window extends JPanel{
     }
     
     public void setRobotPosition(Vec position){
+        this.robotRealWorldPosition = position;
         this.robotPosition = transformVec(position).add(this.robotOffset);
         this.repaint();
     }
     
     public void moveRobotToPosition(Vec position){
-        if(this.isAnimating && this.animationIndex == this.animationIndexBoundary){
-            this.setRobotPosition(position);
+        this.isAnimating = true;
+        this.animationIndex = 0;
+        this.animationIndexBoundary = Values.robotMovementAnimationTime / this.animationDelayMillisec;
+        this.animationEndPoint = position;
+        this.animationPosition = this.robotRealWorldPosition;
+        this.animationDelta = position.sub(this.animationPosition).mul((double)this.animationDelayMillisec / (double) Values.robotMovementAnimationTime);
+        this.timer.setDelay(Values.robotMovementAnimationTime / this.animationIndexBoundary);
+        this.timer.restart();
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if(this.animationIndex >= this.animationIndexBoundary){
+            this.timer.stop();
             this.isAnimating = false;
-            return;
+            this.animationPosition = this.animationEndPoint;
+        }else{
+            this.animationPosition = this.animationPosition.add(this.animationDelta);
         }
-        if(!this.isAnimating){
-            this.isAnimating = true;
-            this.animationIndex = 0;
-            this.animationIndexBoundary = Values.robotMovementAnimationTime / this.animationDelayMillisec;
-            this.animationDelta = position.sub(this.robotPosition).mul((double)this.animationDelayMillisec / (double) Values.robotMovementAnimationTime);
-        }
-        this.robotPosition = this.robotPosition.add(this.animationDelta);
         this.animationIndex++;
-        this.repaint();
+        System.out.println(this.animationPosition);
+        this.setRobotPosition(this.animationPosition);
     }
     
     private Vec transformVec(Vec vec){
