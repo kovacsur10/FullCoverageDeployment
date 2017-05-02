@@ -100,7 +100,7 @@ public class Robot {
             if (visible)
                 polygon.add(v);
         }
-        polygon.sort((Vec a, Vec b) -> (int) (Math.atan2(a.y - pos.y, a.x - pos.x) - Math.atan2(b.y - pos.y, b.x - pos.x)));
+        polygon.sort((Vec a, Vec b) -> (int)Math.signum(Math.atan2(a.y - pos.y, a.x - pos.x) - Math.atan2(b.y - pos.y, b.x - pos.x)));
         for (int i = 0; i < polygon.size() - 1; ++i) {
             if (nextQuadrant(polygon.get(i), polygon.get(i + 1))) continue;
             Line edge = new Line(polygon.get(i), polygon.get(i + 1));
