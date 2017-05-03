@@ -46,16 +46,16 @@ class Window extends JPanel implements ActionListener{
     private Vec animationEndPoint;
     private Sensor sensorToPut;
             
-    public Window(int width, int height, float scale, Vec offset){       
+    public Window(Vec dimensions, double scale, Vec offset){       
         this.offset = offset;
         
-        this.scale = scale;
+        this.scale = (float) scale;
         this.sensors = new ArrayList<>();
         this.sides = new ArrayList<>();
         this.robotPosition = new Vec(0,0);
         
-        this.width = width;
-        this.height = height;
+        this.width = Math.round((float) dimensions.x);
+        this.height = Math.round((float) dimensions.y);
         
         this.sensorSensingRadius = Math.round(((float)Values.sensorSensing) * this.scale * 2);
         this.robotSensingRadius = Math.round(((float)Values.robotSensing) * this.scale * 2);

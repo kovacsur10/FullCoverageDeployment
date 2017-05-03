@@ -27,7 +27,7 @@ public class View {
         this.frame.setSize(450, 450);
         this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 
-        Window window = new Window(600, 450, 50.0f, new Vec(100, 350));
+        Window window = new Window(this.roi.windowDimensions, this.roi.windowScale, this.roi.windowOffset);
         window.setSides(this.roi.sides);
         this.frame.add(window);
         this.frame.pack();

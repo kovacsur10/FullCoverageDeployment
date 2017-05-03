@@ -19,6 +19,9 @@ public class ROI {
         sides = new ArrayList<>(m);
         for (int i = 0; i < m; ++i)
             sides.add(new Line(points.get(sc.nextInt()), points.get(sc.nextInt())));
+        windowDimensions = new Vec(sc.nextInt(), sc.nextInt());
+        windowScale = sc.nextDouble();
+        windowOffset = new Vec(sc.nextInt(), sc.nextInt());
     }
 
     double dist(Vec pos, double dir, double range) {
@@ -34,4 +37,7 @@ public class ROI {
 
     ArrayList<Vec> points;
     ArrayList<Line> sides;
+    Vec windowDimensions;
+    double windowScale;
+    Vec windowOffset;
 }

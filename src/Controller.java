@@ -57,7 +57,7 @@ public class Controller  implements ActionListener{
                     }
                 }
                 break;
-            case Values.autoRunActionKey:
+            case Values.autoRunActionKey: //TODO: recreate this
                 /*if(e.getSource() == this.window.autoMoveRobotButtonInvisible && this.forceStopped)
                     return;
                 
