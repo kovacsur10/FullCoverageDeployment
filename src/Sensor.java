@@ -1,8 +1,6 @@
 
 public class Sensor {
 
-    static final double sensing = Math.sqrt(2);
-
     public static enum State {
         REGULAR, BOUNDARY, ENTRANCE;
     }

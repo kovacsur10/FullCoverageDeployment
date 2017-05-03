@@ -2,8 +2,8 @@ import java.util.ArrayList;
 
 public class Robot {
 
-    static final double visibility = 3;
-    static final double grid = Math.sqrt(2) * Sensor.sensing;
+    static final double visibility = Values.robotSensing;
+    static final double grid = Math.sqrt(2) * Values.sensorSensing;
 
     public enum Direction {
         EAST(0),
@@ -72,7 +72,7 @@ public class Robot {
         }
         for (Direction dir : cornerDir) {
             double dist = roi.dist(pos, dir.rad, visibility);
-            if (dist > Sensor.sensing && dist < 2 * Sensor.sensing)
+            if (dist > Values.sensorSensing && dist < 2 * Values.sensorSensing)
                 BSensors.add(nextGrid(pos, dir, dist));
         }
         BSensors.removeIf(v->isCovered(v));
@@ -145,7 +145,7 @@ public class Robot {
 
     boolean isCovered(Vec pos) {
         for (Sensor s : sensors)
-            if (pos.dist(s.coord) <= Sensor.sensing)
+            if (pos.dist(s.coord) <= Values.sensorSensing)
                 return true;
         return false;
     }

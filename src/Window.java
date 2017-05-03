@@ -14,7 +14,8 @@ class Window extends JPanel implements ActionListener{
     private final Vec sensorOffset = new Vec(-this.sensorRadius, -this.sensorRadius);
     private final int robotRadius = 5;
     private final Vec robotOffset = new Vec(-this.robotRadius, -this.robotRadius);
-    private final int sensingRadius;
+    private final int sensorSensingRadius;
+    private final int robotSensingRadius;
     
     private ArrayList<Line> sides;
     private final ArrayList<Sensor> sensors;
@@ -31,7 +32,8 @@ class Window extends JPanel implements ActionListener{
     public JButton autoMoveRobotButtonInvisible;
     public JButton animationEndRobotButtonInvisible;
     
-    private JCheckBoxMenuItem filterSensorRadius;
+    private final JCheckBoxMenuItem filterSensorRadius;
+    private final JCheckBoxMenuItem filterRobotRadius;
     
     //animation variable
     private Timer timer;
@@ -55,13 +57,20 @@ class Window extends JPanel implements ActionListener{
         this.width = width;
         this.height = height;
         
-        this.sensingRadius = Math.round(((float)Math.sqrt(2)) * this.scale * 2);
+        this.sensorSensingRadius = Math.round(((float)Values.sensorSensing) * this.scale * 2);
+        this.robotSensingRadius = Math.round(((float)Values.robotSensing) * this.scale * 2);
         
         JMenu menu = new JMenu("Filters");
         this.filterSensorRadius = new JCheckBoxMenuItem(Values.filterShowSensorRadiusText);
         this.filterSensorRadius.setSelected(true);
         this.filterSensorRadius.addActionListener(this);
         menu.add(this.filterSensorRadius);
+        
+        this.filterRobotRadius = new JCheckBoxMenuItem(Values.filterShowRobotRadiusText);
+        this.filterRobotRadius.setSelected(true);
+        this.filterRobotRadius.addActionListener(this);
+        menu.add(this.filterRobotRadius);
+        
         
         JMenuBar menuBar = new JMenuBar();
         menuBar.add(menu);
@@ -119,7 +128,7 @@ class Window extends JPanel implements ActionListener{
         
         this.sensors.forEach((Sensor sen) -> {
             Vec vec = sen.coord;
-            Vec vecRad = vec.sub(new Vec(this.sensingRadius/2.0, sensingRadius/2.0));
+            Vec vecRad = vec.sub(new Vec(this.sensorSensingRadius/2.0, sensorSensingRadius/2.0));
             vec = vec.add(this.sensorOffset);
             if(sen.state == Sensor.State.BOUNDARY){
                 g2.setColor(Color.lightGray);
@@ -131,11 +140,17 @@ class Window extends JPanel implements ActionListener{
             g2.drawRoundRect(Math.round((float)vec.x), Math.round((float)vec.y), this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2);
             g2.setColor(Color.black);
             if(this.filterSensorRadius.isSelected()){
-                g2.drawRoundRect(Math.round((float)vecRad.x), Math.round((float)vecRad.y), this.sensingRadius, this.sensingRadius, this.sensingRadius, this.sensingRadius);
+                g2.setColor(Color.lightGray);
+                g2.drawRoundRect(Math.round((float)vecRad.x), Math.round((float)vecRad.y), this.sensorSensingRadius, this.sensorSensingRadius, this.sensorSensingRadius, this.sensorSensingRadius);
+                g2.setColor(Color.black);
             }
         });
         
         g2.drawRoundRect(Math.round((float)this.robotPosition.x), Math.round((float)this.robotPosition.y), this.robotRadius*2, this.robotRadius*2, this.robotRadius*2, this.robotRadius*2);
+        if(this.filterRobotRadius.isSelected()){
+            Vec vecRad = this.robotPosition.sub(this.robotOffset).sub(new Vec(this.robotSensingRadius/2.0, this.robotSensingRadius/2.0));
+            g2.drawRoundRect(Math.round((float)vecRad.x), Math.round((float)vecRad.y), this.robotSensingRadius, this.robotSensingRadius, this.robotSensingRadius, this.robotSensingRadius);
+        }
     }
     
     public void setSides(ArrayList<Line> sides){
