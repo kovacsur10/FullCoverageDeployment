@@ -1,6 +1,6 @@
-import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
@@ -11,26 +11,54 @@ public class Controller  implements ActionListener{
     
     private boolean autoRunning = false;
     private boolean forceStopped = false;
+    private boolean alreadyMoved = false;
+    
+    private ArrayList<Sensor> sensorsToReach;
     
     public Controller(Robot robot, Window window){
         super();
         this.model = robot;
         this.window = window;
+        this.window.setRobotPosition(this.model.pos);
     }
     
     @Override
     public void actionPerformed(ActionEvent e){
         switch(e.getActionCommand()){
+            case Values.animationStoppedKey:
+                if(!this.sensorsToReach.isEmpty()){
+                    Sensor s = this.sensorsToReach.get(0);
+                    this.window.placeSensor(new Sensor(s.coord, s.seqNum, s.state, s.backPtr));
+                    this.sensorsToReach.remove(0);
+                }else if(!this.alreadyMoved){
+                    this.alreadyMoved = true;
+                    this.window.moveRobotToPosition(new Vec(this.model.pos));
+                }else if(this.alreadyMoved){
+                    this.enableStartButtons();
+                }
+                break;
             case Values.stepActionName:
-                this.disableStartButtons();
                 this.forceStopped = false;
-                this.model.stepFCD();
-                this.window.placeSensors(this.model.getNewSensors());
-                this.window.moveRobotToPosition(this.model.pos);
-                this.enableStartButtons();
+                if(this.model.stepFCD()){
+                    this.disableStartButtons();
+                    this.sensorsToReach = this.model.getNewSensors();
+                    if(!this.sensorsToReach.isEmpty()){
+                        if(this.sensorsToReach.get(this.sensorsToReach.size()-1).coord.equals(this.model.pos)){
+                            this.alreadyMoved = true;
+                        }else{
+                            this.alreadyMoved = false;
+                        }
+                        Sensor s = this.sensorsToReach.get(0);
+                        this.window.placeSensor(new Sensor(s.coord, s.seqNum, s.state, s.backPtr));
+                        this.sensorsToReach.remove(0);
+                    }else{
+                        this.window.moveRobotToPosition(new Vec(this.model.pos));
+                        this.alreadyMoved = true;
+                    }
+                }
                 break;
             case Values.autoRunActionKey:
-                if(e.getSource() == this.window.autoMoveRobotButtonInvisible && this.forceStopped)
+                /*if(e.getSource() == this.window.autoMoveRobotButtonInvisible && this.forceStopped)
                     return;
                 
                 this.disableStartButtons();
@@ -39,7 +67,7 @@ public class Controller  implements ActionListener{
                 }
                 this.autoRunning = true;
                 this.model.stepFCD();
-                this.window.placeSensors(this.model.getNewSensors());
+                //this.window.placeSensors(this.model.getNewSensors());
                 this.window.moveRobotToPosition(this.model.pos);
                 if(!this.model.fcdEnded() && !forceStopped){
                     SwingUtilities.invokeLater(new Runnable(){
@@ -56,7 +84,7 @@ public class Controller  implements ActionListener{
                     this.enableStartButtons();
                     this.forceStopped = false;
                     this.autoRunning = false;
-                }
+                }*/
                 break;
             case Values.stopRunActionKey:
                 this.forceStopped = true;

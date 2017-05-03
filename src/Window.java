@@ -17,7 +17,7 @@ class Window extends JPanel implements ActionListener{
     private final int sensingRadius;
     
     private ArrayList<Line> sides;
-    private final ArrayList<Vec> sensors;
+    private final ArrayList<Sensor> sensors;
     private Vec robotPosition;
     private Vec robotRealWorldPosition = new Vec(0,0);
     private final Vec offset;
@@ -29,15 +29,20 @@ class Window extends JPanel implements ActionListener{
     public JButton autoMoveRobotButton;
     public JButton stopMovingRobotButton;
     public JButton autoMoveRobotButtonInvisible;
+    public JButton animationEndRobotButtonInvisible;
+    
+    private JCheckBoxMenuItem filterSensorRadius;
     
     //animation variable
     private Timer timer;
+    private Timer callbackTimer;
     private boolean isAnimating = false;
     private int animationIndex = 0;
     private int animationIndexBoundary = 0;
     private Vec animationDelta;
     private Vec animationPosition;
     private Vec animationEndPoint;
+    private Sensor sensorToPut;
             
     public Window(int width, int height, float scale, Vec offset){       
         this.offset = offset;
@@ -52,7 +57,12 @@ class Window extends JPanel implements ActionListener{
         
         this.sensingRadius = Math.round(((float)Math.sqrt(2)) * this.scale * 2);
         
-        JMenu menu = new JMenu("Main");
+        JMenu menu = new JMenu("Filters");
+        this.filterSensorRadius = new JCheckBoxMenuItem(Values.filterShowSensorRadiusText);
+        this.filterSensorRadius.setSelected(true);
+        this.filterSensorRadius.addActionListener(this);
+        menu.add(this.filterSensorRadius);
+        
         JMenuBar menuBar = new JMenuBar();
         menuBar.add(menu);
         JButton button = new JButton(new StepAction(Values.stepActionName));
@@ -74,6 +84,13 @@ class Window extends JPanel implements ActionListener{
         this.autoMoveRobotButtonInvisible = button;
         menuBar.add(this.autoMoveRobotButtonInvisible);
         
+        button = new JButton(new AutoStepAction(Values.animationStoppedKey));
+        button.setFocusable(false);
+        button.setEnabled(true);
+        button.setVisible(false);
+        this.animationEndRobotButtonInvisible = button;
+        menuBar.add(this.animationEndRobotButtonInvisible);
+        
         button = new JButton(new StopStepAction(Values.stopRunActionKey));
         button.setFocusable(true);
         button.setEnabled(false);
@@ -82,6 +99,7 @@ class Window extends JPanel implements ActionListener{
         
         this.add(menuBar);
         this.timer = new Timer(Values.robotMovementAnimationTime, this);
+        this.callbackTimer = new Timer(10, this);
     }
     
     @Override
@@ -91,7 +109,6 @@ class Window extends JPanel implements ActionListener{
 
     @Override
     public void paintComponent(Graphics g) {
-        System.out.println("PRINT");
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
         
@@ -100,11 +117,22 @@ class Window extends JPanel implements ActionListener{
             g2.draw(line); 
         });
         
-        this.sensors.forEach((vec) -> {
+        this.sensors.forEach((Sensor sen) -> {
+            Vec vec = sen.coord;
             Vec vecRad = vec.sub(new Vec(this.sensingRadius/2.0, sensingRadius/2.0));
             vec = vec.add(this.sensorOffset);
+            if(sen.state == Sensor.State.BOUNDARY){
+                g2.setColor(Color.lightGray);
+            }else if(sen.state == Sensor.State.ENTRANCE){
+                g2.setColor(Color.red);
+            }else{
+                g2.setColor(Color.black);
+            }
             g2.drawRoundRect(Math.round((float)vec.x), Math.round((float)vec.y), this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2);
-            g2.drawRoundRect(Math.round((float)vecRad.x), Math.round((float)vecRad.y), this.sensingRadius, this.sensingRadius, this.sensingRadius, this.sensingRadius);
+            g2.setColor(Color.black);
+            if(this.filterSensorRadius.isSelected()){
+                g2.drawRoundRect(Math.round((float)vecRad.x), Math.round((float)vecRad.y), this.sensingRadius, this.sensingRadius, this.sensingRadius, this.sensingRadius);
+            }
         });
         
         g2.drawRoundRect(Math.round((float)this.robotPosition.x), Math.round((float)this.robotPosition.y), this.robotRadius*2, this.robotRadius*2, this.robotRadius*2, this.robotRadius*2);
@@ -117,11 +145,9 @@ class Window extends JPanel implements ActionListener{
         });
     }
     
-    public void placeSensors(ArrayList<Vec> position){
-        position.forEach((pos) -> {
-            this.sensors.add(transformVec(pos));
-        });
-        this.repaint();
+    public void placeSensor(Sensor sensor){
+        this.sensorToPut = sensor;
+        this.moveRobotToPosition(sensor.coord);
     }
     
     public void setRobotPosition(Vec position){
@@ -143,15 +169,31 @@ class Window extends JPanel implements ActionListener{
     
     @Override
     public void actionPerformed(ActionEvent e) {
+        if(e.getSource() == this.filterSensorRadius){
+            this.repaint();
+            return;
+        }
+        
+        if(e.getSource() == this.callbackTimer){
+            this.callbackTimer.stop();
+            this.animationEndRobotButtonInvisible.doClick();
+            return;
+        }
+        
         if(this.animationIndex >= this.animationIndexBoundary){
             this.timer.stop();
             this.isAnimating = false;
             this.animationPosition = this.animationEndPoint;
+            if(this.sensorToPut != null){
+                this.sensorToPut.coord = transformVec(this.sensorToPut.coord);
+                this.sensors.add(this.sensorToPut);
+                this.sensorToPut = null;
+            }
+            this.callbackTimer.restart();
         }else{
             this.animationPosition = this.animationPosition.add(this.animationDelta);
         }
         this.animationIndex++;
-        System.out.println(this.animationPosition);
         this.setRobotPosition(this.animationPosition);
     }
     

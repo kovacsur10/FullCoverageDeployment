@@ -16,7 +16,7 @@ public class View {
     public View(){
         //create model
         try {
-            this.roi = new ROI("map.txt");
+            this.roi = new ROI("map_hun.txt");
         } catch (FileNotFoundException ex) {
             Logger.getLogger(View.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -40,5 +40,6 @@ public class View {
         window.autoMoveRobotButton.addActionListener(this.controller);
         window.autoMoveRobotButtonInvisible.addActionListener(this.controller);
         window.stopMovingRobotButton.addActionListener(this.controller);
+        window.animationEndRobotButtonInvisible.addActionListener(this.controller);
     }
 }

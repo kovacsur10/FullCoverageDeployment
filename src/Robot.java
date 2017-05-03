@@ -26,22 +26,21 @@ public class Robot {
         this.roi = roi;
         this.pos = start;
         this.sensors = new ArrayList<>();
-        this.newSensorVecs = new ArrayList<>();
+        this.newSensors = new ArrayList<>();
         this.fcdEnded = false;
         this.started = false;
-        //TODO: set robot position on screen
     }
 
     Direction[] mainDir = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
     Direction[] cornerDir = {Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.SOUTH_WEST, Direction.NORTH_WEST};
 
-    public void stepFCD() {
+    public boolean stepFCD() {
         if (!this.started) {
             putSensor(new Sensor(pos, sensors.size(), Sensor.State.REGULAR, null));
             this.started = true;
         } else if (!this.fcdEnded) {
-            if (criticalAreas()) return;
-            if (boundaryHandling()) return;
+            if (criticalAreas()) return true;
+            if (boundaryHandling()) return true;
             int i;
             for (i = 0; i < mainDir.length &&
                     (roi.dist(pos, mainDir[i].rad, visibility) < grid || sensorAt(nextGrid(pos, mainDir[i])) != null); ++i)
@@ -50,7 +49,7 @@ public class Robot {
                 Sensor back = sensorAt(pos).backPtr;
                 if (back == null) {
                     this.fcdEnded = true;
-                    return;
+                    return true;
                 }
                 move(back.coord);
             } else {
@@ -58,7 +57,10 @@ public class Robot {
                 move(nextGrid(pos, mainDir[i]));
                 putSensor(new Sensor(pos, sensors.size(), Sensor.State.REGULAR, prev));
             }
+        }else{
+            return false;
         }
+        return true;
     }
 
     boolean boundaryHandling() {
@@ -150,7 +152,7 @@ public class Robot {
 
     void putSensor(Sensor s) {
         this.sensors.add(s);
-        this.newSensorVecs.add(s.coord);
+        this.newSensors.add(s);
         System.out.println("sensor " + pos.x + " " + pos.y);
     }
 
@@ -159,9 +161,9 @@ public class Robot {
         System.out.println("move " + pos.x + " " + pos.y);
     }
 
-    public ArrayList<Vec> getNewSensors() {
-        ArrayList<Vec> tmpNewSensorVecs = new ArrayList<Vec>(this.newSensorVecs);
-        this.newSensorVecs.clear();
+    public ArrayList<Sensor> getNewSensors() {
+        ArrayList<Sensor> tmpNewSensorVecs = new ArrayList<>(this.newSensors);
+        this.newSensors.clear();
         return tmpNewSensorVecs;
     }
 
@@ -172,7 +174,7 @@ public class Robot {
     ROI roi;
     Vec pos;
     ArrayList<Sensor> sensors;
-    private ArrayList<Vec> newSensorVecs;
+    private ArrayList<Sensor> newSensors;
     private boolean fcdEnded;
     private boolean started;
 }

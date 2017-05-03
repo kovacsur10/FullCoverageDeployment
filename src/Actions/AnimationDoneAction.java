@@ -3,9 +3,9 @@ package Actions;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 
-public class AutoStepAction extends AbstractAction{
+public class AnimationDoneAction extends AbstractAction{
     
-    public AutoStepAction(String text){
+    public AnimationDoneAction(String text){
         super(text, null);
     }
     
