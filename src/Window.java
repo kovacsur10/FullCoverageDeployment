@@ -37,9 +37,8 @@ class Window extends JPanel implements ActionListener{
     private final JCheckBoxMenuItem filterRobotRadius;
     
     //animation variable
-    private Timer timer;
-    private Timer callbackTimer;
-    private boolean isAnimating = false;
+    private final Timer timer;
+    private final Timer callbackTimer;
     private int animationIndex = 0;
     private int animationIndexBoundary = 0;
     private Vec animationDelta;
@@ -186,7 +185,6 @@ class Window extends JPanel implements ActionListener{
     }
     
     public void moveRobotToPosition(Vec position){
-        this.isAnimating = true;
         this.animationIndex = 0;
         this.animationIndexBoundary = Values.robotMovementAnimationTime / this.animationDelayMillisec;
         this.animationEndPoint = position;
@@ -211,7 +209,6 @@ class Window extends JPanel implements ActionListener{
         
         if(this.animationIndex >= this.animationIndexBoundary){
             this.timer.stop();
-            this.isAnimating = false;
             this.animationPosition = this.animationEndPoint;
             if(this.sensorToPut != null){
                 this.sensorToPut.coord = transformVec(this.sensorToPut.coord);

@@ -13,8 +13,10 @@ public final class Values {
     public static final int robotDrawingDelayMillisec = 1000;
     public static final int sensorDrawingDelayMillisec = 500;
     
-    static final double sensorSensing = Math.sqrt(2);
-    static final double robotSensing = 3.0;
+    public static final double sensorSensing = Math.sqrt(2);
+    public static final double robotSensing = 3.0;
+    
+    public static final int autoPlayingWaitingTime = 800;
     
     private Values(){
     }
