@@ -27,6 +27,7 @@ public class Robot {
         this.pos = start;
         this.sensors = new ArrayList<>();
         this.newSensors = new ArrayList<>();
+        this.newSides = new ArrayList<>();
         this.fcdEnded = false;
         this.started = false;
     }
@@ -113,7 +114,8 @@ public class Robot {
             entrance = entrance.add(shift);
             move(entrance);
             edge.isEntrance = true;
-            roi.sides.add(edge); //TODO: add side to window
+            roi.sides.add(edge);
+            this.newSides.add(edge);
             putSensor(new Sensor(pos, sensors.size(), Sensor.State.ENTRANCE, sensorAt(u)));
             return true;
         }
@@ -166,6 +168,12 @@ public class Robot {
         this.newSensors.clear();
         return tmpNewSensorVecs;
     }
+    
+    public ArrayList<Line> getNewSides() {
+        ArrayList<Line> tmpNewLineArray = new ArrayList<>(this.newSides);
+        this.newSides.clear();
+        return tmpNewLineArray;
+    }
 
     public boolean fcdEnded() {
         return fcdEnded;
@@ -174,6 +182,7 @@ public class Robot {
     ROI roi;
     Vec pos;
     ArrayList<Sensor> sensors;
+    private ArrayList<Line> newSides;
     private ArrayList<Sensor> newSensors;
     private boolean fcdEnded;
     private boolean started;

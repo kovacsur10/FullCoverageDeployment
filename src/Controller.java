@@ -1,9 +1,6 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 
 public class Controller  implements ActionListener{
     private final Robot model;
@@ -24,6 +21,7 @@ public class Controller  implements ActionListener{
     
     @Override
     public void actionPerformed(ActionEvent e){
+        this.window.addNewSides(this.model.getNewSides());
         switch(e.getActionCommand()){
             case Values.animationStoppedKey:
                 if(!this.sensorsToReach.isEmpty()){
@@ -40,7 +38,7 @@ public class Controller  implements ActionListener{
             case Values.stepActionName:
                 this.forceStopped = false;
                 if(this.model.stepFCD()){
-                    this.disableStartButtons();
+                    this.disableButtons();
                     this.sensorsToReach = this.model.getNewSensors();
                     if(!this.sensorsToReach.isEmpty()){
                         if(this.sensorsToReach.get(this.sensorsToReach.size()-1).coord.equals(this.model.pos)){
@@ -104,6 +102,18 @@ public class Controller  implements ActionListener{
     private void enableStartButtons(){
         this.window.autoMoveRobotButton.setEnabled(true);
         this.window.moveRobotButton.setEnabled(true);
+        this.window.stopMovingRobotButton.setEnabled(false);
+    }
+    
+    private void enableButtons(){
+        this.window.autoMoveRobotButton.setEnabled(true);
+        this.window.moveRobotButton.setEnabled(true);
+        this.window.stopMovingRobotButton.setEnabled(true);
+    }
+    
+    private void disableButtons(){
+        this.window.autoMoveRobotButton.setEnabled(false);
+        this.window.moveRobotButton.setEnabled(false);
         this.window.stopMovingRobotButton.setEnabled(false);
     }
 }

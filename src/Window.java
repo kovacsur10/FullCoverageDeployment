@@ -25,6 +25,7 @@ class Window extends JPanel implements ActionListener{
     private final int width;
     private final int height;
     private final float scale;
+    private int normalSides;
     
     public JButton moveRobotButton;
     public JButton autoMoveRobotButton;
@@ -70,7 +71,6 @@ class Window extends JPanel implements ActionListener{
         this.filterRobotRadius.setSelected(true);
         this.filterRobotRadius.addActionListener(this);
         menu.add(this.filterRobotRadius);
-        
         
         JMenuBar menuBar = new JMenuBar();
         menuBar.add(menu);
@@ -121,40 +121,54 @@ class Window extends JPanel implements ActionListener{
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
         
-        this.sides.forEach((l) -> {
+        for(int i = 0; i < this.sides.size(); i++) {
+            Line l = this.sides.get(i);
             Line2D line = new Line2D.Float(Math.round(l.getP1().x), Math.round(l.getP1().y), Math.round(l.getP2().x), Math.round(l.getP2().y));
-            g2.draw(line); 
-        });
+            if(i >= normalSides){
+                g2.setColor(Color.red);
+            }
+            g2.draw(line);
+            g2.setColor(Color.black);
+        }
+        
+        if(this.filterRobotRadius.isSelected()){
+            Vec vecRad = this.robotPosition.sub(this.robotOffset).sub(new Vec(this.robotSensingRadius/2.0, this.robotSensingRadius/2.0));
+            g2.drawRoundRect(Math.round((float)vecRad.x), Math.round((float)vecRad.y), this.robotSensingRadius, this.robotSensingRadius, this.robotSensingRadius, this.robotSensingRadius);
+        }
+        g2.drawRoundRect(Math.round((float)this.robotPosition.x), Math.round((float)this.robotPosition.y), this.robotRadius*2, this.robotRadius*2, this.robotRadius*2, this.robotRadius*2);
+        g2.fillRoundRect(Math.round((float)this.robotPosition.x), Math.round((float)this.robotPosition.y), this.robotRadius*2, this.robotRadius*2, this.robotRadius*2, this.robotRadius*2);
         
         this.sensors.forEach((Sensor sen) -> {
             Vec vec = sen.coord;
             Vec vecRad = vec.sub(new Vec(this.sensorSensingRadius/2.0, sensorSensingRadius/2.0));
             vec = vec.add(this.sensorOffset);
-            if(sen.state == Sensor.State.BOUNDARY){
-                g2.setColor(Color.lightGray);
-            }else if(sen.state == Sensor.State.ENTRANCE){
-                g2.setColor(Color.red);
-            }else{
-                g2.setColor(Color.black);
-            }
-            g2.drawRoundRect(Math.round((float)vec.x), Math.round((float)vec.y), this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2);
-            g2.setColor(Color.black);
             if(this.filterSensorRadius.isSelected()){
                 g2.setColor(Color.lightGray);
                 g2.drawRoundRect(Math.round((float)vecRad.x), Math.round((float)vecRad.y), this.sensorSensingRadius, this.sensorSensingRadius, this.sensorSensingRadius, this.sensorSensingRadius);
                 g2.setColor(Color.black);
             }
+            if(sen.state == Sensor.State.BOUNDARY){
+                g2.setColor(Color.green);
+            }else if(sen.state == Sensor.State.ENTRANCE){
+                g2.setColor(Color.red);
+            }else{
+                g2.setColor(Color.darkGray);
+            }
+            g2.drawRoundRect(Math.round((float)vec.x), Math.round((float)vec.y), this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2);
+            g2.fillRoundRect(Math.round((float)vec.x), Math.round((float)vec.y), this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2);
+            g2.setColor(Color.black);
         });
-        
-        g2.drawRoundRect(Math.round((float)this.robotPosition.x), Math.round((float)this.robotPosition.y), this.robotRadius*2, this.robotRadius*2, this.robotRadius*2, this.robotRadius*2);
-        if(this.filterRobotRadius.isSelected()){
-            Vec vecRad = this.robotPosition.sub(this.robotOffset).sub(new Vec(this.robotSensingRadius/2.0, this.robotSensingRadius/2.0));
-            g2.drawRoundRect(Math.round((float)vecRad.x), Math.round((float)vecRad.y), this.robotSensingRadius, this.robotSensingRadius, this.robotSensingRadius, this.robotSensingRadius);
-        }
     }
     
     public void setSides(ArrayList<Line> sides){
+        this.normalSides = sides.size();
         this.sides = new ArrayList<>();
+        sides.forEach((l) -> {
+            this.sides.add(new Line(transformVec(l.getP1()), transformVec(l.getP2())));
+        });
+    }
+    
+    public void addNewSides(ArrayList<Line> sides){
         sides.forEach((l) -> {
             this.sides.add(new Line(transformVec(l.getP1()), transformVec(l.getP2())));
         });
