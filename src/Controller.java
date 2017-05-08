@@ -36,8 +36,6 @@ public class Controller  implements ActionListener{
             }
             return;
         }
-        
-        this.window.addNewSides(this.model.getNewSides());
         switch(e.getActionCommand()){
             case Values.animationStoppedKey:
                 if(!this.sensorsToReach.isEmpty()){
@@ -100,6 +98,7 @@ public class Controller  implements ActionListener{
                 this.disableStartButtons();
             else
                 this.disableButtons();
+            this.window.addNewSides(this.model.getNewSides());
             this.sensorsToReach = this.model.getNewSensors();
             if(!this.sensorsToReach.isEmpty()){
                 if(this.sensorsToReach.get(this.sensorsToReach.size()-1).coord.equals(this.model.pos)){
