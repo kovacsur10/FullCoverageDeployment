@@ -32,6 +32,7 @@ class Window extends JPanel implements ActionListener{
     public JButton stopMovingRobotButton;
     public JButton autoMoveRobotButtonInvisible;
     public JButton animationEndRobotButtonInvisible;
+    public JMenuItem openMapMenuItem;
     
     private final JCheckBoxMenuItem filterSensorRadius;
     private final JCheckBoxMenuItem filterRobotRadius;
@@ -60,7 +61,14 @@ class Window extends JPanel implements ActionListener{
         this.sensorSensingRadius = Math.round(((float)Values.sensorSensing) * this.scale * 2);
         this.robotSensingRadius = Math.round(((float)Values.robotSensing) * this.scale * 2);
         
-        JMenu menu = new JMenu("Filters");
+        JMenu menu = new JMenu("File");
+        this.openMapMenuItem = new JMenuItem("Open map");
+        menu.add(this.openMapMenuItem);
+        
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.add(menu);
+        
+        menu = new JMenu("Filters");
         this.filterSensorRadius = new JCheckBoxMenuItem(Values.filterShowSensorRadiusText);
         this.filterSensorRadius.setSelected(true);
         this.filterSensorRadius.addActionListener(this);
@@ -71,7 +79,6 @@ class Window extends JPanel implements ActionListener{
         this.filterRobotRadius.addActionListener(this);
         menu.add(this.filterRobotRadius);
         
-        JMenuBar menuBar = new JMenuBar();
         menuBar.add(menu);
         JButton button = new JButton(new StepAction(Values.stepActionName));
         button.setFocusable(true);
