@@ -2,6 +2,7 @@ import java.awt.geom.Line2D;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Scanner;
 
 /**
@@ -9,7 +10,7 @@ import java.util.Scanner;
  */
 public class ROI {
     public ROI(String fileName) throws FileNotFoundException {
-        Scanner sc = new Scanner(new File(fileName));
+        Scanner sc = new Scanner(new File(fileName)).useLocale(Locale.ENGLISH);;
         int n = sc.nextInt();
         points = new ArrayList<>(n);
         for (int i = 0; i < n; ++i)

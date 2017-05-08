@@ -16,7 +16,7 @@ public class View {
     public View(){
         //create model
         try {
-            this.roi = new ROI("map_hun.txt");
+            this.roi = new ROI("map.txt");
         } catch (FileNotFoundException ex) {
             Logger.getLogger(View.class.getName()).log(Level.SEVERE, null, ex);
         }
