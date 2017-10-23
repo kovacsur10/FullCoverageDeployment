@@ -1,16 +1,18 @@
-package Actions;
+package controller.action;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 
-public class StopStepAction extends AbstractAction{
-    
-    public StopStepAction(String text){
+public class StepAction extends AbstractAction{
+
+    static final long serialVersionUID = 1200L;
+
+    public StepAction(String text){
         super(text, null);
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
     }
-    
+
 }

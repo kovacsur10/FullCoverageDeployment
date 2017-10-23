@@ -1,20 +1,26 @@
+package controller;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import javax.swing.Timer;
 
+import model.*;
+import src.Values;
+import view.*;
+
 public class Controller  implements ActionListener{
-    private final Robot model;
-    private final Window window;
-    
+    public final Robot model;
+    public final Window window;
+
     private boolean autoRunning = false;
     private boolean forceStopped = false;
     private boolean alreadyMoved = false;
-    
+
     private final Timer callbackTimer;
-    
+
     private ArrayList<Sensor> sensorsToReach;
-    
+
     public Controller(Robot robot, Window window){
         super();
         this.model = robot;
@@ -22,7 +28,7 @@ public class Controller  implements ActionListener{
         this.window.setRobotPosition(this.model.pos);
         this.callbackTimer = new Timer(Values.autoPlayingWaitingTime, this);
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e){
         if(e.getSource() == this.callbackTimer){
@@ -37,61 +43,61 @@ public class Controller  implements ActionListener{
             return;
         }
         switch(e.getActionCommand()){
-            case Values.animationStoppedKey:
-                if(!this.sensorsToReach.isEmpty()){
-                    Sensor s = this.sensorsToReach.get(0);
-                    this.window.placeSensor(new Sensor(s.coord, s.seqNum, s.state, s.backPtr));
-                    this.sensorsToReach.remove(0);
-                }else if(!this.alreadyMoved){
-                    this.alreadyMoved = true;
-                    this.window.moveRobotToPosition(new Vec(this.model.pos));
-                }else if(this.alreadyMoved){
-                    if(this.autoRunning && !this.forceStopped){
-                        this.callbackTimer.restart();
-                    }else{
-                        this.cleanup();
-                    }
+        case Values.animationStoppedKey:
+            if(!this.sensorsToReach.isEmpty()){
+                Sensor s = this.sensorsToReach.get(0);
+                this.window.placeSensor(new Sensor(s.coord, s.seqNum, s.state, s.backPtr));
+                this.sensorsToReach.remove(0);
+            }else if(!this.alreadyMoved){
+                this.alreadyMoved = true;
+                this.window.moveRobotToPosition(new Vec(this.model.pos));
+            }else if(this.alreadyMoved){
+                if(this.autoRunning && !this.forceStopped){
+                    this.callbackTimer.restart();
+                }else{
+                    this.cleanup();
                 }
-                break;
-            case Values.stepActionName:
-                step(false);
-                break;
-            case Values.autoRunActionKey:
-                this.autoRunning = true;
-                step(true);
-                break;
-            case Values.stopRunActionKey:
-                this.forceStopped = true;
-                this.disableButtons();
-                break;
-            default:
+            }
+            break;
+        case Values.stepActionName:
+            step(false);
+            break;
+        case Values.autoRunActionKey:
+            this.autoRunning = true;
+            step(true);
+            break;
+        case Values.stopRunActionKey:
+            this.forceStopped = true;
+            this.disableButtons();
+            break;
+        default:
         }
     }
-    
+
     private void disableStartButtons(){
         this.window.autoMoveRobotButton.setEnabled(false);
         this.window.moveRobotButton.setEnabled(false);
         this.window.stopMovingRobotButton.setEnabled(true);
     }
-    
+
     private void enableStartButtons(){
         this.window.autoMoveRobotButton.setEnabled(true);
         this.window.moveRobotButton.setEnabled(true);
         this.window.stopMovingRobotButton.setEnabled(false);
     }
-    
+
     private void enableButtons(){
         this.window.autoMoveRobotButton.setEnabled(true);
         this.window.moveRobotButton.setEnabled(true);
         this.window.stopMovingRobotButton.setEnabled(true);
     }
-    
+
     private void disableButtons(){
         this.window.autoMoveRobotButton.setEnabled(false);
         this.window.moveRobotButton.setEnabled(false);
         this.window.stopMovingRobotButton.setEnabled(false);
     }
-    
+
     private boolean step(boolean repeatable){
         if(this.model.stepFCD()){
             if(repeatable)
@@ -119,7 +125,7 @@ public class Controller  implements ActionListener{
         }
         return true;
     }
-    
+
     private void cleanup(){
         this.enableStartButtons();
         this.autoRunning = false;

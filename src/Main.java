@@ -1,5 +1,9 @@
+package src;
+
 import java.io.FileNotFoundException;
 import javax.swing.SwingUtilities;
+
+import view.View;
 
 public class Main {
 
