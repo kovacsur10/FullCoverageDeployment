@@ -19,25 +19,30 @@ public class Window extends JPanel implements ActionListener{
     private final Vec sensorOffset = new Vec(-this.sensorRadius, -this.sensorRadius);
     private final int robotRadius = 5;
     private final Vec robotOffset = new Vec(-this.robotRadius, -this.robotRadius);
-    private final int sensorSensingRadius;
-    private final int robotSensingRadius;
-
-    private ArrayList<Line> sides;
+    
+    private int sensorSensingRadius;
+    private int robotSensingRadius;
+    
+    // Model --> View transformation values
+    private final int topMargin = 50; //because of the menu
+    private Vec margin;
+    private float scale;
+    private Vec offset;
+    private Vec minimumPoint;
+    private Vec maximumPoint;
+    
+    private final ArrayList<Line> sides;
     private final ArrayList<Sensor> sensors;
-    private Vec robotPosition;
-    private Vec robotRealWorldPosition = new Vec(0,0);
-    private final Vec offset;
-    private final int width;
-    private final int height;
-    private final float scale;
+    private Vec robotPosition = new Vec(0, 0);
     private int normalSides;
+    private boolean loadedMap;
 
-    public JButton moveRobotButton;
-    public JButton autoMoveRobotButton;
-    public JButton stopMovingRobotButton;
-    public JButton autoMoveRobotButtonInvisible;
-    public JButton animationEndRobotButtonInvisible;
-    public JMenuItem openMapMenuItem;
+    JButton moveRobotButton;
+    JButton autoMoveRobotButton;
+    JButton stopMovingRobotButton;
+    JButton autoMoveRobotButtonInvisible;
+    JButton animationEndRobotButtonInvisible;
+    JMenuItem openMapMenuItem;
 
     private final JCheckBoxMenuItem filterSensorRadius;
     private final JCheckBoxMenuItem filterRobotRadius;
@@ -52,19 +57,17 @@ public class Window extends JPanel implements ActionListener{
     private Vec animationEndPoint;
     private Sensor sensorToPut;
 
-    public Window(Vec dimensions, double scale, Vec offset){       
-        this.offset = offset;
-
-        this.scale = (float) scale;
+    public Window(Vec dimensions, Vec margin){
+        this.loadedMap = false;
         this.sensors = new ArrayList<>();
         this.sides = new ArrayList<>();
         this.robotPosition = new Vec(0,0);
+        
+        this.scale = 1.0f;
+        this.offset = new Vec(0,0);
 
-        this.width = Math.round((float) dimensions.x);
-        this.height = Math.round((float) dimensions.y);
-
-        this.sensorSensingRadius = Math.round(((float)Values.sensorSensing) * this.scale * 2);
-        this.robotSensingRadius = Math.round(((float)Values.robotSensing) * this.scale * 2);
+        this.setPreferredSize(new Dimension(Math.round((float) dimensions.x), Math.round((float) dimensions.y)));
+        this.margin = margin;
 
         JMenu menu = new JMenu("File");
         this.openMapMenuItem = new JMenuItem("Open map");
@@ -120,87 +123,98 @@ public class Window extends JPanel implements ActionListener{
         this.add(menuBar);
         this.timer = new Timer(Values.robotMovementAnimationTime, this);
         this.callbackTimer = new Timer(10, this);
-    }
-
-    @Override
-    public Dimension getPreferredSize(){
-        return new Dimension(this.width, this.height);
+        
+        this.disableStartButtons();
+        this.disableButtons();
     }
 
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Graphics2D g2 = (Graphics2D) g;
-
-        for(int i = 0; i < this.sides.size(); i++) {
-            Line l = this.sides.get(i);
-            Line2D line = new Line2D.Float(Math.round(l.getP1().x), Math.round(l.getP1().y), Math.round(l.getP2().x), Math.round(l.getP2().y));
-            if(i >= normalSides){
-                g2.setColor(Color.red);
-            }
-            g2.draw(line);
-            g2.setColor(Color.black);
-        }
-
-        if(this.filterRobotRadius.isSelected()){
-            Vec vecRad = this.robotPosition.sub(this.robotOffset).sub(new Vec(this.robotSensingRadius/2.0, this.robotSensingRadius/2.0));
-            g2.drawRoundRect(Math.round((float)vecRad.x), Math.round((float)vecRad.y), this.robotSensingRadius, this.robotSensingRadius, this.robotSensingRadius, this.robotSensingRadius);
-        }
-        g2.drawRoundRect(Math.round((float)this.robotPosition.x), Math.round((float)this.robotPosition.y), this.robotRadius*2, this.robotRadius*2, this.robotRadius*2, this.robotRadius*2);
-        g2.fillRoundRect(Math.round((float)this.robotPosition.x), Math.round((float)this.robotPosition.y), this.robotRadius*2, this.robotRadius*2, this.robotRadius*2, this.robotRadius*2);
-
-        this.sensors.forEach((Sensor sen) -> {
-            Vec vec = sen.coord;
-            Vec vecRad = vec.sub(new Vec(this.sensorSensingRadius/2.0, sensorSensingRadius/2.0));
-            vec = vec.add(this.sensorOffset);
-            if(this.filterSensorRadius.isSelected()){
-                g2.setColor(Color.lightGray);
-                g2.drawRoundRect(Math.round((float)vecRad.x), Math.round((float)vecRad.y), this.sensorSensingRadius, this.sensorSensingRadius, this.sensorSensingRadius, this.sensorSensingRadius);
+        
+        if(this.loadedMap) {
+            Graphics2D g2 = (Graphics2D) g;
+    
+            for(int i = 0; i < this.sides.size(); i++) {
+                Line l = this.sides.get(i);
+                l = new Line(transformVec(l.getP1()), transformVec(l.getP2()));
+                Line2D line = new Line2D.Float(Math.round(l.getP1().x), Math.round(l.getP1().y), Math.round(l.getP2().x), Math.round(l.getP2().y));
+                if(i >= normalSides){
+                    g2.setColor(Color.red);
+                }
+                g2.draw(line);
                 g2.setColor(Color.black);
             }
-            if(sen.state == Sensor.State.BOUNDARY){
-                g2.setColor(Color.green);
-            }else if(sen.state == Sensor.State.ENTRANCE){
-                g2.setColor(Color.red);
-            }else{
-                g2.setColor(Color.darkGray);
+    
+            Vec robotPosition = transformVec(this.robotPosition).add(this.robotOffset);
+            if(this.filterRobotRadius.isSelected()){
+                Vec vecRad = robotPosition.sub(this.robotOffset).sub(new Vec(this.robotSensingRadius/2.0, this.robotSensingRadius/2.0));
+                g2.drawRoundRect(Math.round((float)vecRad.x), Math.round((float)vecRad.y), this.robotSensingRadius, this.robotSensingRadius, this.robotSensingRadius, this.robotSensingRadius);
             }
-            g2.drawRoundRect(Math.round((float)vec.x), Math.round((float)vec.y), this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2);
-            g2.fillRoundRect(Math.round((float)vec.x), Math.round((float)vec.y), this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2);
-            g2.setColor(Color.black);
-        });
+            g2.drawRoundRect(Math.round((float)robotPosition.x), Math.round((float)robotPosition.y), this.robotRadius*2, this.robotRadius*2, this.robotRadius*2, this.robotRadius*2);
+            g2.fillRoundRect(Math.round((float)robotPosition.x), Math.round((float)robotPosition.y), this.robotRadius*2, this.robotRadius*2, this.robotRadius*2, this.robotRadius*2);
+    
+            this.sensors.forEach((Sensor sen) -> {
+                Vec vec = transformVec(sen.getCoordinates());
+                Vec vecRad = vec.sub(new Vec(this.sensorSensingRadius/2.0, sensorSensingRadius/2.0));
+                vec = vec.add(this.sensorOffset);
+                if(this.filterSensorRadius.isSelected()){
+                    g2.setColor(Color.lightGray);
+                    g2.drawRoundRect(Math.round((float)vecRad.x), Math.round((float)vecRad.y), this.sensorSensingRadius, this.sensorSensingRadius, this.sensorSensingRadius, this.sensorSensingRadius);
+                    g2.setColor(Color.black);
+                }
+                if(sen.getState() == Sensor.State.BOUNDARY){
+                    g2.setColor(Color.green);
+                }else if(sen.getState() == Sensor.State.ENTRANCE){
+                    g2.setColor(Color.red);
+                }else{
+                    g2.setColor(Color.darkGray);
+                }
+                g2.drawRoundRect(Math.round((float)vec.x), Math.round((float)vec.y), this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2);
+                g2.fillRoundRect(Math.round((float)vec.x), Math.round((float)vec.y), this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2, this.sensorRadius*2);
+                g2.setColor(Color.black);
+            });
+        }
+    }
+    
+    public void onLoadMap(ArrayList<Line> sides, Vec min, Vec max) {
+        this.loadedMap = true;
+        this.minimumPoint = min;
+        this.maximumPoint = max;
+        this.onResize(this.getWidth(), this.getHeight());
+        this.enableStartButtons();
+        this.setSides(sides);
+        this.sensors.clear();
+        this.repaint();
     }
 
-    public void setSides(ArrayList<Line> sides){
+    private void setSides(ArrayList<Line> sides){
         this.normalSides = sides.size();
-        this.sides = new ArrayList<>();
-        sides.forEach((l) -> {
-            this.sides.add(new Line(transformVec(l.getP1()), transformVec(l.getP2())));
-        });
+        this.sides.clear();
+        addNewSides(sides);
     }
 
     public void addNewSides(ArrayList<Line> sides){
-        sides.forEach((l) -> {
-            this.sides.add(new Line(transformVec(l.getP1()), transformVec(l.getP2())));
-        });
+        this.sides.addAll(sides);
     }
 
     public void placeSensor(Sensor sensor){
         this.sensorToPut = sensor;
-        this.moveRobotToPosition(sensor.coord);
+        this.moveRobotToPosition(sensor.getCoordinates());
     }
 
     public void setRobotPosition(Vec position){
-        this.robotRealWorldPosition = position;
-        this.robotPosition = transformVec(position).add(this.robotOffset);
-        this.repaint();
+        if(this.loadedMap) {
+            this.robotPosition = position;
+            this.repaint();
+        }
     }
 
     public void moveRobotToPosition(Vec position){
         this.animationIndex = 0;
         this.animationIndexBoundary = Values.robotMovementAnimationTime / this.animationDelayMillisec;
         this.animationEndPoint = position;
-        this.animationPosition = this.robotRealWorldPosition;
+        this.animationPosition = this.robotPosition;
         this.animationDelta = position.sub(this.animationPosition).mul((double)this.animationDelayMillisec / (double) Values.robotMovementAnimationTime);
         this.timer.setDelay(Values.robotMovementAnimationTime / this.animationIndexBoundary);
         this.timer.restart();
@@ -223,7 +237,6 @@ public class Window extends JPanel implements ActionListener{
             this.timer.stop();
             this.animationPosition = this.animationEndPoint;
             if(this.sensorToPut != null){
-                this.sensorToPut.coord = transformVec(this.sensorToPut.coord);
                 this.sensors.add(this.sensorToPut);
                 this.sensorToPut = null;
             }
@@ -234,8 +247,47 @@ public class Window extends JPanel implements ActionListener{
         this.animationIndex++;
         this.setRobotPosition(this.animationPosition);
     }
+    
+    public void disableStartButtons(){
+        this.autoMoveRobotButton.setEnabled(false);
+        this.moveRobotButton.setEnabled(false);
+        this.stopMovingRobotButton.setEnabled(true);
+    }
 
-    private Vec transformVec(Vec vec){
+    public void enableStartButtons(){
+        this.autoMoveRobotButton.setEnabled(true);
+        this.moveRobotButton.setEnabled(true);
+        this.stopMovingRobotButton.setEnabled(false);
+    }
+
+    public void enableButtons(){
+        this.autoMoveRobotButton.setEnabled(true);
+        this.moveRobotButton.setEnabled(true);
+        this.stopMovingRobotButton.setEnabled(true);
+    }
+
+    public void disableButtons(){
+        this.autoMoveRobotButton.setEnabled(false);
+        this.moveRobotButton.setEnabled(false);
+        this.stopMovingRobotButton.setEnabled(false);
+    }
+    
+    Vec transformVec(Vec vec){        
         return vec.mul(this.scale).add(this.offset);
+    }
+
+    void onResize(int newWidth, int newHeight) {
+        this.setPreferredSize(new Dimension(newWidth, newHeight));
+        if(this.minimumPoint == null || this.maximumPoint == null) {
+            return;
+        }
+        float mapWidth = (float) (this.maximumPoint.x - this.minimumPoint.x);
+        float mapHeight = (float) (this.maximumPoint.y - this.minimumPoint.y);
+        float scale = (float) ((this.getHeight() - 2 * this.margin.y - this.topMargin) / mapHeight);
+        this.scale = (float) ((this.getWidth() - 2 * this.margin.x) / mapWidth);
+        this.scale = this.scale < scale ? this.scale : scale;
+        this.offset = new Vec(this.margin.x - (this.minimumPoint.x * this.scale), (this.margin.y + this.topMargin) - (this.minimumPoint.y * this.scale));
+        this.sensorSensingRadius = Math.round(((float)Values.sensorSensing) * this.scale * 2);
+        this.robotSensingRadius = Math.round(((float)Values.robotSensing) * this.scale * 2);
     }
 }

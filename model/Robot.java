@@ -7,6 +7,13 @@ public class Robot {
 
     static final double visibility = Values.robotSensing;
     static final double grid = Math.sqrt(2) * Values.sensorSensing;
+    public ROI roi;
+    private Vec pos;
+    public ArrayList<Sensor> sensors;
+    private ArrayList<Line> newSides;
+    private ArrayList<Sensor> newSensors;
+    private boolean fcdEnded;
+    private boolean started;
 
     public enum Direction {
         EAST(0),
@@ -33,6 +40,10 @@ public class Robot {
         this.newSides = new ArrayList<>();
         this.fcdEnded = false;
         this.started = false;
+    }
+    
+    public Vec getPosition() {
+        return this.pos;
     }
 
     Direction[] mainDir = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
@@ -94,11 +105,11 @@ public class Robot {
 
     boolean criticalAreas() {
         ArrayList<Vec> polygon = new ArrayList<>();
-        for (Vec v : roi.points) {
+        for (Vec v : roi.getPoints()) {
             if (pos.dist(v) > visibility) continue;
             Line ray = new Line(pos, v);
             boolean visible = true;
-            for (Line side : roi.sides)
+            for (Line side : roi.getSides())
                 if (!v.equals(side.getP1()) && !v.equals(side.getP2()) && ray.intersect(side) != null) {
                     visible = false;
                     break;
@@ -110,14 +121,14 @@ public class Robot {
         for (int i = 0; i < polygon.size() - 1; ++i) {
             if (nextQuadrant(polygon.get(i), polygon.get(i + 1))) continue;
             Line edge = new Line(polygon.get(i), polygon.get(i + 1));
-            if (roi.sides.contains(edge)) continue;
+            if (roi.getSides().contains(edge)) continue;
             Vec u = pos,
                     entrance = edge.getP1().add(edge.getP2()).mul(0.5),
                     shift = entrance.sub(u).mul(Vec.eps);
             entrance = entrance.add(shift);
             move(entrance);
             edge.setAsEntrance();
-            roi.sides.add(edge);
+            roi.getSides().add(edge);
             this.newSides.add(edge);
             putSensor(new Sensor(pos, sensors.size(), Sensor.State.ENTRANCE, sensorAt(u)));
             return true;
@@ -181,12 +192,4 @@ public class Robot {
     public boolean fcdEnded() {
         return fcdEnded;
     }
-
-    public ROI roi;
-    public Vec pos;
-    public ArrayList<Sensor> sensors;
-    private ArrayList<Line> newSides;
-    private ArrayList<Sensor> newSensors;
-    private boolean fcdEnded;
-    private boolean started;
 }

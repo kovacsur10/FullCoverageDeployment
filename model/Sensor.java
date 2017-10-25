@@ -6,10 +6,10 @@ public class Sensor {
         REGULAR, BOUNDARY, ENTRANCE;
     }
 
-    public Vec coord;
-    public int seqNum;
-    public State state;
-    public Sensor backPtr;
+    private Vec coord;
+    private int seqNum;
+    private State state;
+    private Sensor backPtr;
 
     public Sensor(Vec coord, int seqNum, State state, Sensor backPtr) {
         this.coord = coord;
@@ -18,19 +18,19 @@ public class Sensor {
         this.backPtr = backPtr;
     }
 
-    int getSequenceNumber() {
+    public int getSequenceNumber() {
         return seqNum;
     }
 
-    State getState() {
+    public State getState() {
         return state;
     }
 
-    Vec getCoordinates() {
+    public Vec getCoordinates() {
         return coord;
     }
 
-    Sensor getPreviousSensor() {
+    public Sensor getPreviousSensor() {
         return backPtr;
     }
 }
